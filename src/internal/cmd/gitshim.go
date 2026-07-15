@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -43,8 +44,13 @@ var installGitShimCmd = &cobra.Command{
 		target := filepath.Join(dir, shimName())
 
 		if info, err := os.Lstat(target); err == nil {
-			if info.Mode()&os.ModeSymlink == 0 && !gitShimForce {
-				return fmt.Errorf("%s already exists and is not a symlink; re-run with --force to replace it", target)
+			// A symlink (our Unix shim) or a copy of the envapor binary (our
+			// Windows shim) is our own and safe to replace idempotently. Any
+			// other file is foreign and needs --force so we never clobber an
+			// unrelated executable that happens to share the name.
+			ours := info.Mode()&os.ModeSymlink != 0 || isOwnShim(target, exe)
+			if !ours && !gitShimForce {
+				return fmt.Errorf("%s already exists and is not an envapor shim; re-run with --force to replace it", target)
 			}
 			if err := os.Remove(target); err != nil {
 				return fmt.Errorf("removing existing shim: %w", err)
@@ -75,6 +81,29 @@ func writeShim(exe, dir, target string) error {
 		return nil
 	}
 	return copyFile(exe, target)
+}
+
+// isOwnShim reports whether the file at path is a byte-for-byte copy of the
+// envapor binary, i.e. the shim we write on Windows. This lets re-installing
+// over our own shim succeed without --force while a foreign file still needs it.
+func isOwnShim(path, exe string) bool {
+	pi, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	ei, err := os.Stat(exe)
+	if err != nil || pi.Size() != ei.Size() {
+		return false
+	}
+	a, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	b, err := os.ReadFile(exe)
+	if err != nil {
+		return false
+	}
+	return bytes.Equal(a, b)
 }
 
 func copyFile(src, dst string) error {

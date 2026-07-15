@@ -1,0 +1,43 @@
+name: Test installers
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unix:
+    name: install.sh (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Install via install.sh
+        run: |
+          set -euo pipefail
+          export ENVAPOR_INSTALL_DIR="$HOME/.envapor-test/bin"
+          curl -fsSL https://raw.githubusercontent.com/automazeio/envapor/main/installers/install.sh | sh
+          echo "$ENVAPOR_INSTALL_DIR" >> "$GITHUB_PATH"
+
+      - name: Verify
+        run: |
+          set -euo pipefail
+          envapor --version
+          test "$(envapor --version)" = "envapor version 0.0.1" || echo "note: version string is '$(envapor --version)'"
+
+  windows:
+    name: install.ps1 (windows-latest)
+    runs-on: windows-latest
+    steps:
+      - name: Install via install.ps1
+        shell: pwsh
+        run: |
+          irm https://raw.githubusercontent.com/automazeio/envapor/main/installers/install.ps1 | iex
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:LOCALAPPDATA\Envapor\bin"
+
+      - name: Verify
+        shell: pwsh
+        run: envapor --version

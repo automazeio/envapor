@@ -4,9 +4,13 @@
 
 > Transparent, Git-native encryption for your `.env` files. Values are encrypted on commit and restored on checkout, so only ciphertext ever lands in Git, with no change to how you use Git or load config.
 
-[![License: Apache-2.0](https://img.shields.io/badge/license-apache--2.0-blue.svg)](./LICENSE)
+[![License](https://img.shields.io/badge/license-apache--2.0-blue.svg)](./LICENSE)
 [![Release](https://img.shields.io/github/v/release/automazeio/envapor?sort=semver)](https://github.com/automazeio/envapor/releases)
-[![Cloudflare Workers](https://github.com/automazeio/envapor/actions/workflows/ci.yml/badge.svg)](https://github.com/automazeio/envapor/actions/workflows/ci.yml)
+[![CI](https://github.com/automazeio/envapor/actions/workflows/ci.yml/badge.svg)](https://github.com/automazeio/envapor/actions/workflows/ci.yml)
+[![Stars](https://img.shields.io/github/stars/automazeio/envapor.svg?style=social&label=Star%20this%20repo&maxAge=60)](https://github.com/automazeio/envapor)
+
+
+---
 
 **Jump to:** [Why](#why) · [Install](#install) · [Quick start](#quick-start) · [Usage](#usage) · [How it works](#how-it-works) · [Security](#security) · [CI/CD](#cicd)
 
@@ -24,6 +28,14 @@ No `.env.enc`, no wrapper commands, no changes to how your app loads config. Aft
 ```
 
 Variable **names stay readable**, so the committed `.env` is its own manifest. No `.env.example` to maintain.
+
+---
+
+> [!TIP]
+> **Ship faster with Automaze.** We partner with founders to bring their vision to life, scale their business, and optimize for success.
+> **[Visit Automaze to book a call ›](https://automaze.io)**
+
+---
 
 ## Contents
 

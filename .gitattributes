@@ -1,0 +1,7 @@
+# >>> envapor >>>
+.env          filter=envapor diff=envapor
+.env.*        filter=envapor diff=envapor
+.env.example  -filter -diff
+.env.sample   -filter -diff
+.env.template -filter -diff
+# <<< envapor <<<

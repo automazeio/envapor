@@ -290,6 +290,15 @@ Manually encrypts managed files (rarely needed; the filter does this automatical
 
 Manually decrypts managed files (rarely needed; the filter does this automatically).
 
+### `envapor install-git-shim`
+
+Installs a `git-envapor` executable next to the envapor binary so Git resolves
+`git envapor <command>` (for example `git envapor status`) to envapor. On Unix
+it is a symlink; on Windows, a copy. The install scripts and the GitHub Action
+do this automatically; run it yourself after a Homebrew or `go install` setup.
+Use `--dir` to choose another directory on your `PATH`, or `--force` to replace
+an existing `git-envapor` file.
+
 ---
 
 ## Team workflows

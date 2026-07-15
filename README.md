@@ -92,9 +92,13 @@ Parsing **fails closed**: a value is left in plaintext *only* on an unambiguous 
 | `envapor keys` | List stored keys, marking the current repository's key |
 | `envapor init NAME` or `--pem PATH` | Configure filters, hook, `.gitattributes`, and map the repo to a key (by stored name or key file) |
 | `envapor doctor` | Diagnose the setup (filters, hook, mapping, coverage, crypto round-trip) |
+| `envapor verify` | Check that `.env` files stored in Git contain no plaintext secrets (CI / pre-push) |
 | `envapor status` | Show the mapping and per-file encryption state |
 | `envapor migrate OLDKEY NEWKEY` | Re-encrypt managed values from one key to another (names or PEM paths) |
 | `envapor encrypt` / `decrypt` | Manually transform managed files (rarely needed) |
+| `envapor install-git-shim` | Enable `git envapor …` as a Git subcommand |
+
+The installers enable `git envapor <command>` automatically; with Homebrew or `go install`, run `envapor install-git-shim` once to add the shim next to the binary.
 
 ## How it works
 

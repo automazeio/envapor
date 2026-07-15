@@ -81,7 +81,9 @@ runs:
         fi
         binary="$tmp/envapor"
         [ "$os" = windows ] && binary="$tmp/envapor.exe"
-        install -m 0755 "$binary" "$bindir/$(basename "$binary")"
+        name="$(basename "$binary")"
+        install -m 0755 "$binary" "$bindir/$name"
+        ln -sf "$name" "$bindir/git-$name" 2>/dev/null || install -m 0755 "$binary" "$bindir/git-$name"
         echo "$bindir" >> "$GITHUB_PATH"
 
     - name: Import key and initialize

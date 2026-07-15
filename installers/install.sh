@@ -91,6 +91,12 @@ if ! install -m 0755 "${tmp}/${BINARY}" "${dir}/${BINARY}" 2>/dev/null; then
   chmod 0755 "${dir}/${BINARY}"
 fi
 
+# Install the git-envapor shim so `git envapor <command>` works. A relative
+# symlink keeps it valid if the directory is later moved.
+if ln -sf "${BINARY}" "${dir}/git-${BINARY}" 2>/dev/null; then
+  info "enabled 'git envapor'"
+fi
+
 info "installed ${BINARY} ${version} to ${dir}/${BINARY}"
 
 case ":${PATH}:" in

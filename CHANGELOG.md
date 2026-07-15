@@ -15,8 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   filters, a pre-commit guard, AES-256-GCM with HKDF-derived subkeys, and
   deterministic, context-bound `ENC[v2:...]` tokens for readable diffs and clean
   merges. Includes `keygen`, `keys`, `init`, `status`, `doctor`, `encrypt`,
-  `decrypt`, and `migrate` commands, a first-party GitHub Action, install scripts
-  for macOS/Linux/Windows, and an agent skill.
+  `decrypt`, `migrate`, and `install-git-shim` commands, a `git envapor` Git
+  subcommand shim, a first-party GitHub Action, install scripts for
+  macOS/Linux/Windows, and an agent skill.
 
 [Unreleased]: https://github.com/automazeio/envapor/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/automazeio/envapor/releases/tag/v0.1.0

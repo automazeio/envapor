@@ -79,6 +79,11 @@ try {
     Copy-Item -Path $exe -Destination (Join-Path $installDir "$Binary.exe") -Force
     Info "installed $Binary $version to $installDir\$Binary.exe"
 
+    # Install the git-envapor shim so `git envapor <command>` works. Windows
+    # symlinks need extra privileges, so copy the executable instead.
+    Copy-Item -Path $exe -Destination (Join-Path $installDir "git-$Binary.exe") -Force
+    Info "enabled 'git envapor'"
+
     $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
     if (-not $userPath) { $userPath = '' }
     $entries = $userPath -split ';' | Where-Object { $_ -ne '' }

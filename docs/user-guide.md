@@ -274,9 +274,9 @@ Runs a full health check and reports on:
 
 Run this first whenever something looks off.
 
-### `envapor migrate OLDPEM NEWPEM`
+### `envapor migrate OLDKEY NEWKEY`
 
-Re-encrypts every managed value from the old key to a new one. Both arguments are paths to PEM key files. Used when a teammate leaves or a key is compromised. See [Rotating keys](#rotating-keys) for scope and limits.
+Re-encrypts every managed value from the old key to a new one. Each argument is either the name of a stored key (as shown by `envapor keys`) or a path to a PEM key file; when a name matches both, the stored key wins (prefix with `./` to force a file path). Used when a teammate leaves or a key is compromised. See [Rotating keys](#rotating-keys) for scope and limits.
 
 ### `envapor status`
 
@@ -356,10 +356,10 @@ The action accepts two optional inputs:
 When a teammate leaves or a key is compromised:
 
 ```bash
-envapor migrate OLDPEM NEWPEM
+envapor migrate OLDKEY NEWKEY
 ```
 
-Both arguments are paths to PEM key files. This re-encrypts the current working tree and all future commits under the new key.
+Each argument is a stored key name (see `envapor keys`) or a path to a PEM key file. This re-encrypts the current working tree and all future commits under the new key.
 
 **Important scope and limits:**
 

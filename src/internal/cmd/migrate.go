@@ -14,9 +14,11 @@ import (
 )
 
 var migrateCmd = &cobra.Command{
-	Use:   "migrate OLDPEM NEWPEM",
+	Use:   "migrate OLDKEY NEWKEY",
 	Short: "Re-encrypt managed values from an old key to a new one",
-	Long: "Re-encrypts the working tree and future commits from OLDPEM to NEWPEM.\n" +
+	Long: "Re-encrypts the working tree and future commits from OLDKEY to NEWKEY.\n" +
+		"Each argument is either the name of a stored key (see 'envapor keys') or\n" +
+		"the path to a PEM key file; a stored key wins when both exist.\n" +
 		"It does not rewrite Git history: past commits stay encrypted under the old\n" +
 		"key, so migration rotates the key, not the secrets themselves. After a\n" +
 		"compromise, also rotate the affected secrets at their source.",
@@ -33,9 +35,17 @@ type migrationFile struct {
 	mode     os.FileMode
 }
 
-func runMigrate(oldPEM, newPEM string) (err error) {
+func runMigrate(oldArg, newArg string) (err error) {
 	if !gitutil.InsideRepo() {
 		return fmt.Errorf("not a git repository")
+	}
+	oldPEM, err := resolveKeyArg(oldArg)
+	if err != nil {
+		return fmt.Errorf("old key: %w", err)
+	}
+	newPEM, err := resolveKeyArg(newArg)
+	if err != nil {
+		return fmt.Errorf("new key: %w", err)
 	}
 	oldKey, err := loadPEMFile(oldPEM)
 	if err != nil {

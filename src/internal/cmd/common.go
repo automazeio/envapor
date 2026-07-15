@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -54,6 +55,26 @@ func selfPath() (string, error) {
 		p = resolved
 	}
 	return p, nil
+}
+
+// resolveKeyArg interprets a user-supplied key argument as either the name of
+// a stored key or a path to a PEM file, returning the file path to load. A
+// stored key wins when both interpretations exist; prefix a path with ./ to
+// force the file interpretation.
+func resolveKeyArg(arg string) (string, error) {
+	if path, err := config.KeyPath(arg); err == nil {
+		if info, statErr := os.Stat(path); statErr == nil && !info.IsDir() {
+			return path, nil
+		}
+	}
+	info, err := os.Stat(arg)
+	if err != nil {
+		return "", fmt.Errorf("%q is neither a stored key (see 'envapor keys') nor a PEM file", arg)
+	}
+	if info.IsDir() {
+		return "", fmt.Errorf("%q is a directory; pass a stored key name (see 'envapor keys') or a PEM file", arg)
+	}
+	return arg, nil
 }
 
 // keyNameFromPath derives a key name from a PEM file path, dropping a trailing

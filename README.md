@@ -93,7 +93,7 @@ Parsing **fails closed**: a value is left in plaintext *only* on an unambiguous 
 | `envapor init NAME` or `--pem PATH` | Configure filters, hook, `.gitattributes`, and map the repo to a key (by stored name or key file) |
 | `envapor doctor` | Diagnose the setup (filters, hook, mapping, coverage, crypto round-trip) |
 | `envapor status` | Show the mapping and per-file encryption state |
-| `envapor migrate OLDPEM NEWPEM` | Re-encrypt managed values from one key to another |
+| `envapor migrate OLDKEY NEWKEY` | Re-encrypt managed values from one key to another (names or PEM paths) |
 | `envapor encrypt` / `decrypt` | Manually transform managed files (rarely needed) |
 
 ## How it works

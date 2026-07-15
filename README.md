@@ -89,6 +89,7 @@ Parsing **fails closed**: a value is left in plaintext *only* on an unambiguous 
 | Command | Purpose |
 |---|---|
 | `envapor keygen NAME` | Generate a new key at `~/.config/envapor/keys/NAME` |
+| `envapor keys` | List stored keys, marking the current repository's key |
 | `envapor init NAME` or `--pem PATH` | Configure filters, hook, `.gitattributes`, and map the repo to a key (by stored name or key file) |
 | `envapor doctor` | Diagnose the setup (filters, hook, mapping, coverage, crypto round-trip) |
 | `envapor status` | Show the mapping and per-file encryption state |

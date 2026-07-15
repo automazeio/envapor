@@ -211,6 +211,30 @@ func SecureKey(name string) error {
 	return nil
 }
 
+// ListKeys returns the names of the keys stored in the keys directory, in
+// lexical order. A missing keys directory yields an empty list, not an error.
+func ListKeys() ([]string, error) {
+	dir, err := KeysDir()
+	if err != nil {
+		return nil, err
+	}
+	entries, err := os.ReadDir(dir)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("envapor: reading keys dir: %w", err)
+	}
+	var names []string
+	for _, e := range entries {
+		if e.IsDir() || strings.HasPrefix(e.Name(), ".") {
+			continue
+		}
+		names = append(names, e.Name())
+	}
+	return names, nil
+}
+
 // KeyExists reports whether a named key file is present.
 func KeyExists(name string) bool {
 	path, err := KeyPath(name)

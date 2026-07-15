@@ -234,6 +234,13 @@ If a managed `.env` file is git-ignored, it would silently never be committed. B
 
 Generates a new key with safe defaults and writes it to `~/.config/envapor/keys/NAME`. Refuses to overwrite an existing key unless you pass `--force`.
 
+### `envapor keys`
+
+Lists the keys stored in the keys directory (`~/.config/envapor/keys/` by
+default), one per line. When run inside an initialized repository, the key
+mapped to that repository is marked. Prints a hint instead when no keys exist
+yet.
+
 ### `envapor init [KEY_NAME]` / `envapor init --pem PATH`
 
 Sets up Envapor in the current repository. The key is given either as the name

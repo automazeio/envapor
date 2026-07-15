@@ -19,6 +19,25 @@ func TestKeyPathRejectsUnsafeNames(t *testing.T) {
 	}
 }
 
+func TestListKeys(t *testing.T) {
+	t.Setenv("ENVAPOR_HOME", t.TempDir())
+	if names, err := ListKeys(); err != nil || len(names) != 0 {
+		t.Fatalf("ListKeys on missing dir = %v, %v; want empty, nil", names, err)
+	}
+	for _, name := range []string{"team", "ci"} {
+		if _, err := WriteKey(name, []byte("pem")); err != nil {
+			t.Fatal(err)
+		}
+	}
+	names, err := ListKeys()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(names) != 2 || names[0] != "ci" || names[1] != "team" {
+		t.Fatalf("ListKeys = %v, want [ci team]", names)
+	}
+}
+
 func TestWriteKeyCorrectsPermissions(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Unix permission bits are not enforced on Windows")

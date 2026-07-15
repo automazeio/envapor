@@ -1,12 +1,14 @@
-<h1 align="center">envapor</h1>
+<img alt="image" src="assets/banner.webp" />
 
-<p align="center">Commit your secrets, securely.</p>
+# envapor
 
-<p align="center">
-  <a href="https://github.com/automazeio/envapor/actions/workflows/ci.yml"><img src="https://github.com/automazeio/envapor/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/automazeio/envapor/releases"><img src="https://img.shields.io/github/v/release/automazeio/envapor?sort=semver" alt="Release"></a>
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License"></a>
-</p>
+> Transparent, Git-native encryption for your `.env` files. Values are encrypted on commit and restored on checkout, so only ciphertext ever lands in Git, with no change to how you use Git or load config.
+
+[![License: Apache-2.0](https://img.shields.io/badge/license-apache--2.0-blue.svg)](./LICENSE)
+[![Release](https://img.shields.io/github/v/release/automazeio/envapor?sort=semver)](https://github.com/automazeio/envapor/releases)
+[![Cloudflare Workers](https://github.com/automazeio/envapor/actions/workflows/ci.yml/badge.svg)](https://github.com/automazeio/envapor/actions/workflows/ci.yml)
+
+**Jump to:** [Why](#why) · [Install](#install) · [Quick start](#quick-start) · [Usage](#usage) · [How it works](#how-it-works) · [Security](#security) · [CI/CD](#cicd)
 
 ---
 
@@ -22,6 +24,32 @@ No `.env.enc`, no wrapper commands, no changes to how your app loads config. Aft
 ```
 
 Variable **names stay readable**, so the committed `.env` is its own manifest. No `.env.example` to maintain.
+
+## Contents
+
+- [Features](#features)
+- [Why](#why)
+- [Install](#install)
+- [Quick start](#quick-start)
+- [Usage](#usage)
+- [How it works](#how-it-works)
+- [Security](#security)
+- [CI/CD](#cicd)
+- [Agent skill](#agent-skill)
+- [Project layout](#project-layout)
+- [Documentation](#documentation)
+
+## Features
+
+| Feature | What you get | Deep dive |
+| --- | --- | --- |
+| **Zero workflow change** | `git add/commit/push/pull` work unchanged after setup | [Quick start](#quick-start) |
+| **One file** | A single `.env`, no parallel encrypted copy to keep in sync | [Usage](#usage) |
+| **Readable diffs & clean merges** | Deterministic encryption, so only changed keys show up | [How it works](#how-it-works) |
+| **Git-native** | Clean/smudge filters plus a pre-commit guard, nothing at runtime | [How it works](#how-it-works) |
+| **Public values** | Mark readable values with a `# PUBLIC` comment, fails closed | [Usage](#usage) |
+| **Single static binary** | macOS, Linux, Windows, no dependencies | [Install](#install) |
+| **Agent-ready** | Install as an Agent Skill for coding agents | [Agent skill](#agent-skill) |
 
 ## Why
 
@@ -149,10 +177,34 @@ curl -fsSL https://raw.githubusercontent.com/automazeio/envapor/main/skills/enva
 
 The skill source lives in [`skills/envapor/SKILL.md`](./skills/envapor/SKILL.md).
 
+## Project layout
+
+```
+envapor/
+├── src/
+│   ├── internal/
+│   │   ├── cmd/        # CLI subcommands (init, keygen, doctor, verify, …)
+│   │   ├── config/     # Key store and repo→key mapping
+│   │   ├── crypto/     # AES-256-GCM, HKDF, token format
+│   │   ├── envfile/    # .env parsing and PUBLIC marker handling
+│   │   ├── gitutil/    # Filters, hooks, .gitattributes
+│   │   └── pktline/    # Git filter protocol
+│   └── main.go         # Binary entry point
+├── installers/         # install.sh, install.ps1
+├── skills/envapor/     # Agent Skill (SKILL.md)
+├── docs/               # User guide
+├── .github/            # CI workflows and setup-envapor action
+└── README.md
+```
+
 ## Documentation
 
 Full walkthrough, team/server/CI workflows, and troubleshooting live in [`docs/user-guide.md`](./docs/user-guide.md).
 
 ## License
 
-[Apache-2.0](./LICENSE)
+[Apache-2.0](./LICENSE) © Automaze
+
+---
+
+Built with Go · Git clean/smudge filters · AES-256-GCM

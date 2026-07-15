@@ -1,0 +1,44 @@
+# Cross-platform release build for Envapor.
+# The Go module lives in src/, so builds set `dir: src`.
+version: 2
+
+project_name: envapor
+
+before:
+  hooks:
+    - go -C src mod tidy
+
+builds:
+  - id: envapor
+    dir: src
+    main: .
+    binary: envapor
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X github.com/automazeio/envapor/internal/cmd.version={{ .Version }}
+
+archives:
+  - id: default
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+release:
+  github:
+    owner: automazeio
+    name: envapor

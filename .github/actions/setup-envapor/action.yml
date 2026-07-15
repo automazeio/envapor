@@ -1,0 +1,103 @@
+name: Setup Envapor
+description: Install Envapor, import the team key, configure Git filters, and decrypt the repository.
+
+inputs:
+  key:
+    description: PEM key contents used to decrypt the repository (pass via a secret).
+    required: true
+  version:
+    description: Envapor release to install (a tag like v1.2.3, or "latest").
+    required: false
+    default: latest
+  key-name:
+    description: Name to store the imported key under in the Envapor keys directory.
+    required: false
+    default: ci
+
+runs:
+  using: composite
+  steps:
+    - name: Install Envapor
+      shell: bash
+      env:
+        ENVAPOR_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+
+        version="$ENVAPOR_VERSION"
+        if [ "$version" = "latest" ]; then
+          version="$(curl -fsSL https://api.github.com/repos/automazeio/envapor/releases/latest \
+            | grep -oE '"tag_name":[[:space:]]*"[^"]+"' | head -1 | cut -d'"' -f4)"
+        fi
+        if [ -z "$version" ]; then
+          echo "::error::could not resolve Envapor release version" >&2
+          exit 1
+        fi
+        number="${version#v}"
+
+        case "$RUNNER_OS" in
+          Linux) os=linux ;;
+          macOS) os=darwin ;;
+          Windows) os=windows ;;
+          *) echo "::error::unsupported runner OS: $RUNNER_OS" >&2; exit 1 ;;
+        esac
+        case "$RUNNER_ARCH" in
+          X64) arch=amd64 ;;
+          ARM64) arch=arm64 ;;
+          *) echo "::error::unsupported runner arch: $RUNNER_ARCH" >&2; exit 1 ;;
+        esac
+
+        ext=tar.gz
+        [ "$os" = windows ] && ext=zip
+        asset="envapor_${number}_${os}_${arch}.${ext}"
+        url="https://github.com/automazeio/envapor/releases/download/${version}/${asset}"
+
+        bindir="$HOME/.envapor/bin"
+        mkdir -p "$bindir"
+        tmp="$(mktemp -d)"
+        trap 'rm -rf "$tmp"' EXIT
+        echo "Downloading $url"
+        curl -fsSL "$url" -o "$tmp/$asset"
+        curl -fsSL "https://github.com/automazeio/envapor/releases/download/${version}/checksums.txt" \
+          -o "$tmp/checksums.txt"
+        grep "  ${asset}$" "$tmp/checksums.txt" > "$tmp/checksums.asset"
+        (
+          cd "$tmp"
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum -c checksums.asset
+          else
+            shasum -a 256 -c checksums.asset
+          fi
+        )
+        if [ "$ext" = zip ]; then
+          unzip -q "$tmp/$asset" -d "$tmp"
+        else
+          tar -xzf "$tmp/$asset" -C "$tmp"
+        fi
+        binary="$tmp/envapor"
+        [ "$os" = windows ] && binary="$tmp/envapor.exe"
+        install -m 0755 "$binary" "$bindir/$(basename "$binary")"
+        echo "$bindir" >> "$GITHUB_PATH"
+
+    - name: Import key and initialize
+      shell: bash
+      env:
+        ENVAPOR_KEY: ${{ inputs.key }}
+        ENVAPOR_KEY_NAME: ${{ inputs.key-name }}
+      run: |
+        set -euo pipefail
+        umask 077
+        case "$ENVAPOR_KEY_NAME" in
+          ""|"."|".."|*/*|*\\*)
+            echo "::error::invalid Envapor key name" >&2
+            exit 1
+            ;;
+        esac
+
+        keydir="${XDG_CONFIG_HOME:-$HOME/.config}/envapor/keys"
+        mkdir -p "$keydir"
+        keyfile="$keydir/$ENVAPOR_KEY_NAME"
+        printf '%s' "$ENVAPOR_KEY" > "$keyfile"
+        chmod 600 "$keyfile"
+
+        envapor init --pem "$keyfile"

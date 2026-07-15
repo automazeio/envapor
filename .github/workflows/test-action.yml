@@ -1,0 +1,42 @@
+name: Test setup-envapor
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    name: Setup and decrypt (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run setup-envapor
+        uses: ./.github/actions/setup-envapor
+        with:
+          key: ${{ secrets.DEMO_PEM_KEY }}
+
+      - name: Show version
+        run: envapor --version
+
+      - name: Doctor
+        run: envapor doctor
+
+      - name: Verify .env was decrypted
+        run: |
+          set -euo pipefail
+          if [ ! -s .env ]; then
+            echo "::error::.env is missing or empty"
+            exit 1
+          fi
+          if grep -q 'ENC\[' .env; then
+            echo "::error::.env still contains encrypted tokens after setup"
+            exit 1
+          fi
+          echo ".env decrypted successfully ($(grep -cE '^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*=' .env) variables)"

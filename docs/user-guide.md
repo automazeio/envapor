@@ -155,7 +155,7 @@ This writes the key to:
 ~/.config/envapor/keys/NAME
 ```
 
-Every generated key meets Envapor's strength requirements automatically. Distribute the key to teammates through a secure channel (see [Team workflows](#team-workflows)). **Never commit a key to the repository.**
+Every generated key is a **512-bit random master key** drawn from the operating system's CSPRNG; the AES-256-GCM encryption and HMAC-SHA256 subkeys are derived from it via HKDF, so no primitive ever uses the master directly. Keys from earlier Envapor versions (256-bit) remain fully supported. Distribute the key to teammates through a secure channel (see [Team workflows](#team-workflows)). **Never commit a key to the repository.**
 
 ---
 

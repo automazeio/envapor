@@ -87,6 +87,43 @@ func TestPEMRoundTrip(t *testing.T) {
 	}
 }
 
+func TestGenerateKeySize(t *testing.T) {
+	k, err := Generate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(k.master) != masterKeySize {
+		t.Fatalf("master key is %d bytes, want %d", len(k.master), masterKeySize)
+	}
+}
+
+func TestLegacyMasterKeyStillLoads(t *testing.T) {
+	legacy := make([]byte, legacyMasterKeySize)
+	for i := range legacy {
+		legacy[i] = byte(i)
+	}
+	k, err := derive(legacy)
+	if err != nil {
+		t.Fatalf("derive(legacy 32-byte key): %v", err)
+	}
+	token, err := k.EncryptContext([]byte("secret"), "A")
+	if err != nil {
+		t.Fatal(err)
+	}
+	reloaded, err := LoadPEM(k.MarshalPEM())
+	if err != nil {
+		t.Fatalf("LoadPEM(legacy): %v", err)
+	}
+	got, err := reloaded.DecryptContext(token, "A")
+	if err != nil || string(got) != "secret" {
+		t.Fatalf("legacy key round trip = %q, %v", got, err)
+	}
+
+	if _, err := derive(make([]byte, 48)); err == nil {
+		t.Fatal("derive accepted a 48-byte master key")
+	}
+}
+
 func TestDecryptWrongKeyFails(t *testing.T) {
 	k1, _ := Generate()
 	k2, _ := Generate()

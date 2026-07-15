@@ -100,7 +100,7 @@ Parsing **fails closed**: a value is left in plaintext *only* on an unambiguous 
 
 Git **clean/smudge filters** do the work: the clean filter encrypts values on the way into the object store; the smudge filter decrypts them on checkout. A **pre-commit hook** is a safety net that aborts the commit if any non-`PUBLIC` value would reach Git as plaintext (for example, before filters are installed on a fresh clone).
 
-Each value is encrypted independently with **AES-256-GCM**, using encryption/MAC subkeys derived from your master key via **HKDF**. Encryption is deterministic (SIV-style: the nonce is derived from the variable name and the plaintext), which keeps diffs readable and merges clean. Each token is also **bound to its variable name**, so a ciphertext moved to a different variable fails to decrypt rather than silently supplying the wrong secret. Tokens are versioned (`ENC[v2:…]`) so the format can evolve; older `v1` tokens remain readable.
+Each value is encrypted independently with **AES-256-GCM**, using encryption/MAC subkeys derived from your 512-bit master key via **HKDF**. Encryption is deterministic (SIV-style: the nonce is derived from the variable name and the plaintext), which keeps diffs readable and merges clean. Each token is also **bound to its variable name**, so a ciphertext moved to a different variable fails to decrypt rather than silently supplying the wrong secret. Tokens are versioned (`ENC[v2:…]`) so the format can evolve; older `v1` tokens remain readable.
 
 ## Security
 

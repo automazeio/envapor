@@ -118,7 +118,7 @@ envapor --version
 ```bash
 git init
 envapor keygen team          # create a key (once per team)
-envapor init --pem ~/.config/envapor/keys/team
+envapor init team            # uses ~/.config/envapor/keys/team
 ```
 
 Then use Git normally:
@@ -134,7 +134,7 @@ git push
 ```bash
 git clone git@github.com:company/project.git
 cd project
-envapor init --pem ~/.config/envapor/keys/team
+envapor init team            # or: envapor init --pem /path/to/team.pem
 ```
 
 That's it. From here, `git add`, `git commit`, `git push`, and `git pull` all behave exactly like standard Git.
@@ -234,9 +234,13 @@ If a managed `.env` file is git-ignored, it would silently never be committed. B
 
 Generates a new key with safe defaults and writes it to `~/.config/envapor/keys/NAME`. Refuses to overwrite an existing key unless you pass `--force`.
 
-### `envapor init --pem PATH`
+### `envapor init [KEY_NAME]` / `envapor init --pem PATH`
 
-Sets up Envapor in the current repository. It:
+Sets up Envapor in the current repository. The key is given either as the name
+of a key already stored in the keys directory (`envapor init team` uses
+`~/.config/envapor/keys/team`, and fails if no such key exists) or as `--pem`
+with the path to a PEM key file anywhere on disk, which is imported into the
+keys directory. Passing both is an error. It:
 
 - Configures the Git clean/smudge filters
 - Installs the pre-commit guard hook
@@ -287,7 +291,7 @@ Envapor is designed around **repository-based secret sharing** among trusted tea
 
 1. One person runs `envapor keygen team` to create the team key.
 2. That key is distributed securely (password manager, encrypted channel, or your org's secret distribution process). **The key is never committed.**
-3. Each teammate saves the key under `~/.config/envapor/keys/` and runs `envapor init --pem ~/.config/envapor/keys/team` after cloning.
+3. Each teammate saves the key under `~/.config/envapor/keys/` and runs `envapor init team` after cloning (or `envapor init --pem <path>` if the key file lives elsewhere).
 
 Repository-to-key mappings are stored locally and never committed:
 

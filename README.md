@@ -57,7 +57,9 @@ Verify with `envapor --version`.
 envapor keygen team
 
 # in a repo (new or freshly cloned)
-envapor init --pem ~/.config/envapor/keys/team
+envapor init team              # uses ~/.config/envapor/keys/team
+# or import a key file from anywhere:
+envapor init --pem /path/to/team.pem
 
 # then just use git
 git add .env
@@ -65,7 +67,7 @@ git commit -m "Add config"
 git push
 ```
 
-On clone, teammates run the same `envapor init --pem …` and Git decrypts `.env` in place. Same command provisions servers and CI, no manual copying of secrets.
+On clone, teammates run the same `envapor init team` (or `envapor init --pem …`) and Git decrypts `.env` in place. Same command provisions servers and CI, no manual copying of secrets.
 
 ## Usage
 
@@ -87,7 +89,7 @@ Parsing **fails closed**: a value is left in plaintext *only* on an unambiguous 
 | Command | Purpose |
 |---|---|
 | `envapor keygen NAME` | Generate a new key at `~/.config/envapor/keys/NAME` |
-| `envapor init --pem PATH` | Configure filters, hook, `.gitattributes`, and map the repo to a key |
+| `envapor init NAME` or `--pem PATH` | Configure filters, hook, `.gitattributes`, and map the repo to a key (by stored name or key file) |
 | `envapor doctor` | Diagnose the setup (filters, hook, mapping, coverage, crypto round-trip) |
 | `envapor status` | Show the mapping and per-file encryption state |
 | `envapor migrate OLDPEM NEWPEM` | Re-encrypt managed values from one key to another |

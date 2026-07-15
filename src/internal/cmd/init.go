@@ -19,10 +19,40 @@ var (
 )
 
 var initCmd = &cobra.Command{
-	Use:   "init",
+	Use:   "init [KEY_NAME]",
 	Short: "Set up envapor in the current repository",
-	Args:  cobra.NoArgs,
-	RunE:  runInit,
+	Long: "Sets up envapor in the current repository using either a key file\n" +
+		"(--pem PATH) or the name of a key already stored in the keys directory\n" +
+		"(for example 'envapor init team' uses ~/.config/envapor/keys/team).",
+	Args: cobra.MaximumNArgs(1),
+	RunE: runInit,
+}
+
+// resolveInitPem turns the command input into the path of the PEM key file to
+// import: either the --pem path verbatim, or the keys-directory path of a named
+// key, which must already exist.
+func resolveInitPem(args []string) (string, error) {
+	if len(args) == 1 {
+		if initPem != "" {
+			return "", fmt.Errorf("pass either a key name or --pem, not both")
+		}
+		name := args[0]
+		path, err := config.KeyPath(name)
+		if err != nil {
+			return "", err
+		}
+		if _, err := os.Stat(path); err != nil {
+			if os.IsNotExist(err) {
+				return "", fmt.Errorf("key %q not found at %s (create it with 'envapor keygen %s' or pass --pem <path>)", name, path, name)
+			}
+			return "", err
+		}
+		return path, nil
+	}
+	if initPem == "" {
+		return "", fmt.Errorf("a key is required: pass a key name ('envapor init NAME') or --pem <path>")
+	}
+	return initPem, nil
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
@@ -34,7 +64,11 @@ func runInit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	pemData, err := os.ReadFile(initPem)
+	pemPath, err := resolveInitPem(args)
+	if err != nil {
+		return err
+	}
+	pemData, err := os.ReadFile(pemPath)
 	if err != nil {
 		return fmt.Errorf("reading key file: %w", err)
 	}
@@ -42,8 +76,8 @@ func runInit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	name := keyNameFromPath(initPem)
-	if err := importKey(name, initPem, pemData); err != nil {
+	name := keyNameFromPath(pemPath)
+	if err := importKey(name, pemPath, pemData); err != nil {
 		return err
 	}
 
@@ -136,8 +170,7 @@ func sameFile(a, b string) bool {
 }
 
 func init() {
-	initCmd.Flags().StringVar(&initPem, "pem", "", "path to the PEM key file (required)")
+	initCmd.Flags().StringVar(&initPem, "pem", "", "path to the PEM key file (alternative to a key name)")
 	initCmd.Flags().BoolVar(&initForce, "force", false, "overwrite an existing foreign pre-commit hook")
-	_ = initCmd.MarkFlagRequired("pem")
 	rootCmd.AddCommand(initCmd)
 }

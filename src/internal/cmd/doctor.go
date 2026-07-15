@@ -85,11 +85,17 @@ func runChecks() []checkResult {
 		out = append(out, checkResult{"key available", statusFail, err.Error()})
 		return out
 	}
+	defer key.Destroy()
 	out = append(out, checkResult{"key available", statusOK, ""})
 
-	out = append(out, checkAttr("managed .env", ".env", "envapor"))
-	for _, ex := range gitutil.DefaultExclusions {
-		out = append(out, checkExclusion(ex))
+	attrPaths := append([]string{".env"}, gitutil.DefaultExclusions...)
+	if attrs, err := gitutil.CheckAttrBatch("filter", attrPaths); err != nil {
+		out = append(out, checkResult{"attributes", statusFail, err.Error()})
+	} else {
+		out = append(out, attrResult("managed .env", attrs[".env"], "envapor"))
+		for _, ex := range gitutil.DefaultExclusions {
+			out = append(out, exclusionResult(ex, attrs[ex]))
+		}
 	}
 
 	files, _ := gitutil.ManagedFiles(gitutil.DefaultExclusions)
@@ -117,23 +123,15 @@ func runChecks() []checkResult {
 	return out
 }
 
-func checkAttr(label, path, want string) checkResult {
-	got, err := gitutil.CheckAttr("filter", path)
-	if err != nil {
-		return checkResult{label, statusFail, err.Error()}
-	}
+func attrResult(label, got, want string) checkResult {
 	if got != want {
 		return checkResult{label, statusFail, fmt.Sprintf("filter=%s, want %s", got, want)}
 	}
 	return checkResult{label, statusOK, ""}
 }
 
-// checkExclusion verifies an example file is not routed through the filter.
-func checkExclusion(path string) checkResult {
-	got, err := gitutil.CheckAttr("filter", path)
-	if err != nil {
-		return checkResult{"exclude " + path, statusFail, err.Error()}
-	}
+// exclusionResult verifies an example file is not routed through the filter.
+func exclusionResult(path, got string) checkResult {
 	if got == "envapor" {
 		return checkResult{"exclude " + path, statusFail, "would be encrypted"}
 	}

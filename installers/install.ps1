@@ -8,7 +8,7 @@
     user PATH.
 
 .EXAMPLE
-    irm https://raw.githubusercontent.com/automazeio/envapor/main/install.ps1 | iex
+    irm https://raw.githubusercontent.com/automazeio/envapor/main/installers/install.ps1 | iex
 
 .NOTES
     Environment overrides:

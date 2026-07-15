@@ -37,6 +37,7 @@ func transformFiles(args []string, fn func([]byte, *crypto.Key) ([]byte, error))
 	if err != nil {
 		return err
 	}
+	defer key.Destroy()
 	files := args
 	if len(files) == 0 {
 		files, err = gitutil.ManagedFiles(gitutil.DefaultExclusions)
@@ -61,7 +62,7 @@ func transformFiles(args []string, fn func([]byte, *crypto.Key) ([]byte, error))
 		if err != nil {
 			return fmt.Errorf("%s: %w", f, err)
 		}
-		if err := os.WriteFile(f, out, info.Mode().Perm()); err != nil {
+		if err := replaceFile(f, out, info.Mode().Perm()); err != nil {
 			return err
 		}
 		fmt.Printf("Processed %s\n", f)

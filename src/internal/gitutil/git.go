@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -26,6 +27,24 @@ func run(args ...string) (string, error) {
 // runRaw executes git and returns raw (untrimmed) stdout bytes.
 func runRaw(args ...string) ([]byte, error) {
 	cmd := exec.Command("git", args...)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		return nil, fmt.Errorf("git %s: %s", strings.Join(args, " "), msg)
+	}
+	return stdout.Bytes(), nil
+}
+
+// runWithStdin executes git with the given arguments and stdin, returning raw
+// stdout bytes.
+func runWithStdin(stdin []byte, args ...string) ([]byte, error) {
+	cmd := exec.Command("git", args...)
+	cmd.Stdin = bytes.NewReader(stdin)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -126,6 +145,59 @@ func ShowStaged(path string) ([]byte, error) {
 	return runRaw("show", ":"+path)
 }
 
+// ShowStagedBatch returns the staged (index) content of many paths in a single
+// `git cat-file --batch` invocation. Paths absent from the index are omitted
+// from the result map rather than reported as an error.
+func ShowStagedBatch(paths []string) (map[string][]byte, error) {
+	result := make(map[string][]byte, len(paths))
+	if len(paths) == 0 {
+		return result, nil
+	}
+	var input bytes.Buffer
+	for _, p := range paths {
+		input.WriteString(":" + p + "\n")
+	}
+	out, err := runWithStdin(input.Bytes(), "cat-file", "--batch")
+	if err != nil {
+		return nil, err
+	}
+
+	// Results stream back in request order. Each present object is framed as
+	// "<oid> <type> <size>\n" followed by <size> content bytes and a trailing
+	// newline; a missing object is a single "<rev> missing\n" line.
+	pos := 0
+	for _, p := range paths {
+		nl := bytes.IndexByte(out[pos:], '\n')
+		if nl < 0 {
+			return nil, fmt.Errorf("unexpected cat-file output for %q", p)
+		}
+		header := string(out[pos : pos+nl])
+		pos += nl + 1
+		if strings.HasSuffix(header, " missing") {
+			continue
+		}
+		fields := strings.Fields(header)
+		if len(fields) != 3 {
+			return nil, fmt.Errorf("unexpected cat-file header %q", header)
+		}
+		size, err := strconv.Atoi(fields[2])
+		if err != nil {
+			return nil, fmt.Errorf("unexpected cat-file size in %q: %w", header, err)
+		}
+		if pos+size > len(out) {
+			return nil, fmt.Errorf("truncated cat-file content for %q", p)
+		}
+		content := make([]byte, size)
+		copy(content, out[pos:pos+size])
+		result[p] = content
+		pos += size
+		if pos < len(out) && out[pos] == '\n' {
+			pos++
+		}
+	}
+	return result, nil
+}
+
 // IndexEntry captures a path's exact index object so transactional commands
 // can restore pre-existing staged content without re-cleaning the work tree.
 type IndexEntry struct {
@@ -179,19 +251,34 @@ func RestoreIndex(entries []IndexEntry) error {
 	return nil
 }
 
-// CheckAttr returns the resolved value of a gitattributes attribute for a path
-// (for example "envapor", "unset", or "unspecified").
-func CheckAttr(attr, path string) (string, error) {
-	out, err := run("check-attr", attr, "--", path)
+// CheckAttrBatch resolves one gitattributes attribute for many paths in a
+// single git invocation, returning a path-to-value map (values such as
+// "envapor", "unset", or "unspecified"). It uses -z framing so paths and
+// values are unambiguous regardless of their contents.
+func CheckAttrBatch(attr string, paths []string) (map[string]string, error) {
+	result := make(map[string]string, len(paths))
+	if len(paths) == 0 {
+		return result, nil
+	}
+	args := append([]string{"check-attr", "-z", attr, "--"}, paths...)
+	out, err := runRaw(args...)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	// Output form: "<path>: <attr>: <value>"
-	idx := strings.LastIndex(out, ": ")
-	if idx < 0 {
-		return "", fmt.Errorf("unexpected check-attr output: %q", out)
+	// -z output is NUL-separated fields in repeating groups of three:
+	// <path> NUL <attr> NUL <value> NUL.
+	raw := strings.TrimSuffix(string(out), "\x00")
+	if raw == "" {
+		return result, nil
 	}
-	return out[idx+2:], nil
+	fields := strings.Split(raw, "\x00")
+	if len(fields)%3 != 0 {
+		return nil, fmt.Errorf("unexpected check-attr output: %d fields", len(fields))
+	}
+	for i := 0; i < len(fields); i += 3 {
+		result[fields[i]] = fields[i+2]
+	}
+	return result, nil
 }
 
 // Stage adds paths to the index, applying the clean filter so managed files are

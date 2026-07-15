@@ -82,6 +82,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("verification failed: %w", err)
 	}
+	defer key.Destroy()
 	for _, path := range files {
 		content, err := os.ReadFile(path)
 		if err != nil {

@@ -23,6 +23,7 @@ var keygenCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		defer key.Destroy()
 		path, err := config.WriteKey(name, key.MarshalPEM())
 		if err != nil {
 			return err

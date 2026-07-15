@@ -67,6 +67,20 @@ func (k *Key) MarshalPEM() []byte {
 	return pem.EncodeToMemory(&pem.Block{Type: PEMType, Bytes: k.master})
 }
 
+// Destroy zeroes the in-memory key material. It is best-effort defense in
+// depth for a short-lived CLI: the AEAD retains an internal copy of the
+// expanded encryption key that Go does not expose for clearing, so this only
+// scrubs the master and MAC secrets we hold directly. It is safe to call on a
+// nil Key and after the key is no longer needed (MarshalPEM will not work
+// afterwards, since the master bytes are cleared).
+func (k *Key) Destroy() {
+	if k == nil {
+		return
+	}
+	clear(k.master)
+	clear(k.mac)
+}
+
 // LoadPEM parses a PEM-encoded Envapor key file.
 func LoadPEM(data []byte) (*Key, error) {
 	block, _ := pem.Decode(data)

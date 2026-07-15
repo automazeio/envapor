@@ -41,6 +41,7 @@ func runMigrate(oldPEM, newPEM string) (err error) {
 	if err != nil {
 		return fmt.Errorf("old key: %w", err)
 	}
+	defer oldKey.Destroy()
 	newData, err := os.ReadFile(newPEM)
 	if err != nil {
 		return fmt.Errorf("new key: %w", err)

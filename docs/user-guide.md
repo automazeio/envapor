@@ -46,12 +46,14 @@ APP_ENV=production # PUBLIC
 What Git stores:
 
 ```
-DATABASE_URL=ENC[v1:9f3a...]
-STRIPE_KEY=ENC[v1:c17b...]
+DATABASE_URL=ENC[v2:9f3a...]
+STRIPE_KEY=ENC[v2:c17b...]
 APP_ENV=production # PUBLIC
 ```
 
-Encryption is **deterministic**: the same value under the same key always produces the same ciphertext. That keeps diffs readable and merges clean; only the variables you actually change show up as changes in Git.
+Encryption is **deterministic**: the same value under the same key and variable name always produces the same ciphertext. That keeps diffs readable and merges clean; only the variables you actually change show up as changes in Git.
+
+Each token is also **bound to its variable name**. Copying an `ENC[...]` value from one variable to another (or renaming a variable directly in the encrypted file) makes decryption fail with an authentication error instead of silently supplying the wrong secret. Rename variables in your plaintext working tree as usual — the filter re-encrypts them under the new name on commit.
 
 ---
 
@@ -66,7 +68,7 @@ brew install automazeio/tap/envapor
 ### Linux — install script
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/automazeio/envapor/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/automazeio/envapor/main/installers/install.sh | sh
 ```
 
 The script detects your CPU architecture (`amd64` or `arm64`), downloads the matching release from GitHub, verifies its checksum against the published `checksums.txt`, and installs the `envapor` binary to a directory on your `PATH`.
@@ -81,7 +83,7 @@ To review the script before running it, open the URL in a browser or `curl` it t
 ### Windows — PowerShell
 
 ```powershell
-irm https://raw.githubusercontent.com/automazeio/envapor/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/automazeio/envapor/main/installers/install.ps1 | iex
 ```
 
 The PowerShell installer detects your architecture, downloads and verifies the matching release, installs `envapor.exe` under `%LOCALAPPDATA%\Envapor\bin`, and adds that directory to your user `PATH`. Open a new terminal afterward so the updated `PATH` takes effect.
@@ -97,7 +99,8 @@ Download the archive for your OS and architecture from the [GitHub releases page
 If you already have a Go toolchain, you can build and install from source. This lives alongside the platform installers above and is not required for normal use:
 
 ```bash
-go install github.com/automazeio/envapor@latest
+git clone https://github.com/automazeio/envapor
+cd envapor/src && go install .
 ```
 
 ### Verify the install
@@ -359,7 +362,7 @@ Both keys appear in the command by design: migration needs the old key to decryp
 
 ## Troubleshooting
 
-**Values look like `ENC[v1:...]` in my editor.**
+**Values look like `ENC[v2:...]` in my editor.**
 The smudge filter did not run on checkout. Run `envapor init --pem <key>` to reinstall the filters, then re-checkout the file with `git checkout -- .env`.
 
 **My commit was aborted with a plaintext warning.**
@@ -396,7 +399,7 @@ No. Envapor focuses on repository-based secret sharing for trusted teams. It is 
 **Where are keys stored?**
 Under `~/.config/envapor/keys/` by default. The location follows `ENVAPOR_HOME` if set, then `XDG_CONFIG_HOME/envapor`, and on Windows falls back to `%APPDATA%\envapor`. Keys and repository mappings are local and never committed.
 
-**What does the `v1` prefix in `ENC[v1:...]` mean?**
-It versions the encryption format so the scheme can evolve without breaking existing repositories.
+**What does the `v2` prefix in `ENC[v2:...]` mean?**
+It versions the encryption format so the scheme can evolve without breaking existing repositories. Current tokens are `v2`, which binds each value to its variable name. Repositories encrypted by earlier versions may still contain `v1` tokens; they remain readable and upgrade to `v2` naturally as values change.
 
 **Success looks like this:** a new developer runs `git clone`, `cd repo`, `envapor init --pem <key>`, and never thinks about Envapor again.

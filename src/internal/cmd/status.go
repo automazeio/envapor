@@ -35,11 +35,15 @@ var statusCmd = &cobra.Command{
 			fmt.Println("managed:  (none)")
 			return nil
 		}
+		staged, err := gitutil.ShowStagedBatch(files)
+		if err != nil {
+			return err
+		}
 		fmt.Println("managed:")
 		for _, f := range files {
 			state := "plaintext (not yet committed)"
-			if staged, err := gitutil.ShowStaged(f); err == nil {
-				if len(envfile.Verify(staged)) == 0 {
+			if content, ok := staged[f]; ok {
+				if len(envfile.Verify(content)) == 0 {
 					state = "encrypted in index"
 				} else {
 					state = "PLAINTEXT in index"

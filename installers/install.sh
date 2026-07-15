@@ -2,7 +2,7 @@
 # Envapor installer for Linux (and macOS as a fallback to Homebrew).
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/automazeio/envapor/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/automazeio/envapor/main/installers/install.sh | sh
 #
 # Environment overrides:
 #   ENVAPOR_VERSION      Release tag to install (e.g. v1.2.3). Defaults to latest.

@@ -39,10 +39,16 @@ esac
 version="${ENVAPOR_VERSION:-}"
 if [ -z "$version" ]; then
   info "resolving latest release"
-  version="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" \
-    | grep -oE '"tag_name"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n1 | cut -d'"' -f4)"
+  # Resolve the latest tag via the releases/latest redirect rather than the
+  # GitHub API, which rate-limits unauthenticated requests (shared CI egress
+  # IPs hit the limit constantly).
+  effective="$(curl -fsSLI -o /dev/null -w '%{url_effective}' \
+    "https://github.com/${REPO}/releases/latest")" || err "could not reach GitHub to resolve latest release"
+  version="${effective##*/tag/}"
 fi
-[ -n "$version" ] || err "could not determine release version"
+case "$version" in
+  "" | */*) err "could not determine release version" ;;
+esac
 number="${version#v}"
 
 asset="${BINARY}_${number}_${os}_${arch}.tar.gz"

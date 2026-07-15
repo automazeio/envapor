@@ -35,9 +35,15 @@ switch ($osArch) {
 $version = $env:ENVAPOR_VERSION
 if (-not $version) {
     Info 'resolving latest release'
-    $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" `
-        -Headers @{ 'User-Agent' = 'envapor-installer' }
-    $version = $release.tag_name
+    # Resolve the latest tag via the releases/latest redirect rather than the
+    # rate-limited GitHub API.
+    $resp = Invoke-WebRequest -Uri "https://github.com/$Repo/releases/latest" -UseBasicParsing
+    $final = if ($resp.BaseResponse.PSObject.Properties.Name -contains 'ResponseUri') {
+        $resp.BaseResponse.ResponseUri.AbsoluteUri            # Windows PowerShell 5.1
+    } elseif ($resp.BaseResponse.RequestMessage) {
+        $resp.BaseResponse.RequestMessage.RequestUri.AbsoluteUri  # PowerShell 7+
+    }
+    if ($final -match '/tag/(.+?)/?$') { $version = $Matches[1] }
 }
 if (-not $version) { Fail 'could not determine release version' }
 $number = $version.TrimStart('v')

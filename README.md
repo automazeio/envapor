@@ -127,6 +127,18 @@ A first-party GitHub Action installs Envapor, imports the key, configures filter
 
 Store the PEM contents in your CI provider's encrypted secrets.
 
+## Agent skill
+
+Coding agents (Claude Code, or anything that supports [Agent Skills](https://agentskills.io)) can install Envapor's skill and then set up, operate, and troubleshoot Envapor on their own — including the guardrails (never commit keys, never gitignore `.env`):
+
+```bash
+mkdir -p ~/.claude/skills/envapor
+curl -fsSL https://raw.githubusercontent.com/automazeio/envapor/main/skills/envapor/SKILL.md \
+  -o ~/.claude/skills/envapor/SKILL.md
+```
+
+The skill source lives in [`skills/envapor/SKILL.md`](./skills/envapor/SKILL.md).
+
 ## Documentation
 
 Full walkthrough, team/server/CI workflows, and troubleshooting live in [`docs/user-guide.md`](./docs/user-guide.md).

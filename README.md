@@ -131,6 +131,12 @@ A first-party GitHub Action installs Envapor, imports the key, configures filter
 
 Store the PEM contents in your CI provider's encrypted secrets.
 
+To guard against plaintext secrets slipping into Git without needing the key, add `envapor verify`. It inspects the committed (index) content of managed `.env` files and exits non-zero if any non-`PUBLIC` value is still plaintext:
+
+```yaml
+- run: envapor verify
+```
+
 ## Agent skill
 
 Coding agents (Claude Code, or anything that supports [Agent Skills](https://agentskills.io)) can install Envapor's skill and then set up, operate, and troubleshoot Envapor on their own — including the guardrails (never commit keys, never gitignore `.env`):

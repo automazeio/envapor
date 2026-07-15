@@ -274,6 +274,22 @@ Runs a full health check and reports on:
 
 Run this first whenever something looks off.
 
+### `envapor verify`
+
+Checks that every managed `.env` file, **as stored in Git's index**, has all
+non-`PUBLIC` values encrypted, and exits non-zero if any plaintext is found.
+The working tree is plaintext by design, so `verify` inspects the committed
+(index) content rather than the working copy. This is the pre-commit guard's
+check exposed as a standalone command, so you can run it in CI or a pre-push
+hook without needing the key:
+
+```bash
+envapor verify
+```
+
+Pass explicit paths to limit the check (`envapor verify .env .env.production`).
+Untracked files are skipped, since nothing is committed to verify.
+
 ### `envapor migrate OLDKEY NEWKEY`
 
 Re-encrypts every managed value from the old key to a new one. Each argument is either the name of a stored key (as shown by `envapor keys`) or a path to a PEM key file; when a name matches both, the stored key wins (prefix with `./` to force a file path). Used when a teammate leaves or a key is compromised. See [Rotating keys](#rotating-keys) for scope and limits.
@@ -357,6 +373,12 @@ The action accepts two optional inputs:
 
 - `version` — the Envapor release to install (a tag like `v1.2.3`, or `latest`; defaults to `latest`).
 - `key-name` — the name the imported key is stored under (defaults to `ci`).
+
+To fail the build if any plaintext secret was ever committed, add a `verify` step. It needs neither the key nor the filters, so it works even as a lightweight standalone check:
+
+```yaml
+- run: envapor verify
+```
 
 ---
 

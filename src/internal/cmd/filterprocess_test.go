@@ -72,6 +72,41 @@ func TestFilterProcessKeyErrorFailsClosed(t *testing.T) {
 	}
 }
 
+func TestFilterProcessSmudgeWrongKeyPassesThrough(t *testing.T) {
+	encKey, err := crypto.Generate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	wrongKey, err := crypto.Generate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	orig := loadFilterKey
+	loadFilterKey = func() (*crypto.Key, error) { return wrongKey, nil }
+	defer func() { loadFilterKey = orig }()
+
+	ciphertext, err := envfile.Encrypt([]byte("SECRET=hunter2\n"), encKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var in bytes.Buffer
+	w := pktline.NewWriter(&in)
+	writeHandshake(t, w)
+	writeCommand(t, w, "smudge", ciphertext)
+
+	var out bytes.Buffer
+	if err := runFilterProcess(&in, &out); err != nil {
+		t.Fatalf("runFilterProcess: %v", err)
+	}
+
+	r := pktline.NewReader(&out)
+	readHandshake(t, r)
+	if got := readCommandResult(t, r); !bytes.Equal(got, ciphertext) {
+		t.Fatalf("smudge with wrong key = %q, want encrypted pass-through %q", got, ciphertext)
+	}
+}
+
 func writeHandshake(t *testing.T, w *pktline.Writer) {
 	t.Helper()
 	must(t, w.WriteText("git-filter-client\n"))

@@ -374,7 +374,7 @@ Both keys appear in the command by design: migration needs the old key to decryp
 ## Troubleshooting
 
 **Values look like `ENC[v2:...]` in my editor.**
-The smudge filter did not run on checkout. Run `envapor init --pem <key>` to reinstall the filters, then re-checkout the file with `git checkout -- .env`.
+The file was checked out without being decrypted — either the filters are not installed, or the local key does not match (in that case `git pull`/`git checkout` prints an `envapor: warning: could not decrypt ...` message but completes normally, leaving the file encrypted). Set the correct key with `envapor init <key>`, then run `envapor decrypt` to restore plaintext.
 
 **My commit was aborted with a plaintext warning.**
 This is the pre-commit guard doing its job: it caught a value that was not encrypted. Run `envapor doctor` to confirm the filters are installed, then re-stage and commit.

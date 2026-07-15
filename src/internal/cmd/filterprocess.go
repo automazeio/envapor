@@ -58,6 +58,7 @@ func runFilterProcess(stdin io.Reader, stdout io.Writer) error {
 			return nil
 		}
 		command := metaValue(meta, "command")
+		pathname := metaValue(meta, "pathname")
 		content, err := r.ReadDataUntilFlush()
 		if err != nil {
 			return err
@@ -69,13 +70,21 @@ func runFilterProcess(stdin io.Reader, stdout io.Writer) error {
 		}
 
 		var result []byte
-		switch {
-		case keyErr != nil:
-			err = keyErr
-		case command == "clean":
-			result, err = envfile.Encrypt(content, key)
-		case command == "smudge":
-			result, err = envfile.Decrypt(content, key)
+		switch command {
+		case "clean":
+			if keyErr != nil {
+				err = keyErr
+			} else {
+				result, err = envfile.Encrypt(content, key)
+			}
+		case "smudge":
+			// Smudge failures pass the encrypted content through so the git
+			// operation succeeds; clean failures above stay fatal (fail closed).
+			if keyErr != nil {
+				result = smudgeFallback(pathname, keyErr, content)
+			} else if result, err = envfile.Decrypt(content, key); err != nil {
+				result, err = smudgeFallback(pathname, err, content), nil
+			}
 		default:
 			err = fmt.Errorf("unsupported filter command %q", command)
 		}

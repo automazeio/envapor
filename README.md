@@ -16,6 +16,14 @@
 
 ---
 
+> [!NOTE]
+> **Built live, in one sitting.** Envapor went from an empty repo to this working tool during a live build session - no script, no highlight reel (and one OBS crash 20 minutes in). Watch the full 2.5-hour recording:
+>
+> **[Zero to shipped ›](https://www.youtube.com/watch?v=p4BYP9DFp9c&list=PLWwTwUPfg-UU)**
+
+
+---
+
 Envapor transparently encrypts the **values** in your `.env` files inside Git. Plaintext is encrypted on commit and restored on checkout, so your working tree stays exactly as it is today while Git only ever stores ciphertext.
 
 No `.env.enc`, no wrapper commands, no changes to how your app loads config. After a one-time setup you just use Git.
